@@ -1,0 +1,25 @@
+
+name: Documentation Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-documents:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required documents
+        run: |
+          test -f README.md
+          test -f docs/SRS.md
+          test -f docs/Architecture_Design.md
+          test -f docs/Test_Plan.md
+          echo "All required documents are present."
