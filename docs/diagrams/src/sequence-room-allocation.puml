@@ -1,0 +1,27 @@
+@startuml sequence-room-allocation
+actor Admin
+participant "Web Client" as Web
+participant "API Gateway" as GW
+participant "Student & Allocation Service" as StudentSvc
+database "Hostel DB" as DB
+participant "Notification Service" as Notif
+
+Admin -> Web : Select student & room/bed
+Web -> GW : POST /api/allocations
+GW -> StudentSvc : allocateRoom(studentId, roomId, bedId)
+StudentSvc -> DB : SELECT bed WHERE id = ? FOR UPDATE
+DB --> StudentSvc : bed status
+
+alt bed available
+  StudentSvc -> DB : UPDATE bed SET status='OCCUPIED', studentId=?
+  DB --> StudentSvc : success
+  StudentSvc -> Notif : notify(studentId, "Room Allocated")
+  StudentSvc --> GW : 201 Created { allocationId }
+  GW --> Web : success response
+  Web --> Admin : Show confirmation
+else bed already occupied
+  StudentSvc --> GW : 409 Conflict
+  GW --> Web : error response
+  Web --> Admin : Show "Bed unavailable" error
+end
+@enduml

@@ -1,0 +1,31 @@
+@startuml sequence-fee-payment
+actor Admin
+participant "Web Client" as Web
+participant "API Gateway" as GW
+participant "Fee Service" as FeeSvc
+participant "Payment Gateway" as Pay
+database "Hostel DB" as DB
+
+Admin -> Web : Enter payment details (student, amount, mode)
+Web -> GW : POST /api/fees/payments
+GW -> FeeSvc : recordPayment(studentId, amount, mode)
+
+alt mode == ONLINE
+  FeeSvc -> Pay : initiateTransaction(amount)
+  Pay --> FeeSvc : transactionStatus
+  alt transaction success
+    FeeSvc -> DB : INSERT payment, UPDATE dueBalance
+    DB --> FeeSvc : receiptNumber
+    FeeSvc --> GW : 201 Created { receiptNumber }
+  else transaction failed
+    FeeSvc --> GW : 402 Payment Required
+  end
+else mode == CASH
+  FeeSvc -> DB : INSERT payment, UPDATE dueBalance
+  DB --> FeeSvc : receiptNumber
+  FeeSvc --> GW : 201 Created { receiptNumber }
+end
+
+GW --> Web : response
+Web --> Admin : Show receipt / error
+@enduml

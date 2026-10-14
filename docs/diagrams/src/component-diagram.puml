@@ -1,0 +1,51 @@
+@startuml component-diagram
+skinparam componentStyle rectangle
+
+actor "Student / Warden / Admin / Security" as User
+
+package "Presentation Layer" {
+  [Web Client (React SPA)] as Web
+}
+
+package "Application Layer (REST API)" {
+  [API Gateway] as GW
+  [Auth Service] as Auth
+  [Student & Allocation Service] as StudentSvc
+  [Fee Service] as FeeSvc
+  [Complaint Service] as ComplaintSvc
+  [Leave / Outpass Service] as LeaveSvc
+  [Visitor & Notice Service] as VisitorSvc
+  [Notification Service] as Notif
+}
+
+package "Data Layer" {
+  database "Hostel DB\n(PostgreSQL)" as DB
+  [Audit Log Store] as AuditLog
+}
+
+cloud "Payment Gateway\n(3rd Party)" as Pay
+
+User --> Web
+Web --> GW : HTTPS / JSON
+
+GW --> Auth
+GW --> StudentSvc
+GW --> FeeSvc
+GW --> ComplaintSvc
+GW --> LeaveSvc
+GW --> VisitorSvc
+
+Auth --> DB
+StudentSvc --> DB
+FeeSvc --> DB
+FeeSvc --> Pay
+ComplaintSvc --> DB
+LeaveSvc --> DB
+VisitorSvc --> DB
+
+Auth --> AuditLog
+FeeSvc --> AuditLog
+ComplaintSvc --> Notif
+LeaveSvc --> Notif
+Notif --> Web : Push / WebSocket
+@enduml

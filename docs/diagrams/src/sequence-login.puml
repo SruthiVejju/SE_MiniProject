@@ -1,0 +1,31 @@
+@startuml sequence-login
+actor Student
+participant "Web Client" as Web
+participant "API Gateway" as GW
+participant "Auth Service" as Auth
+database "Hostel DB" as DB
+
+Student -> Web : Enter roll number & password
+Web -> GW : POST /api/auth/login
+GW -> Auth : validateCredentials(rollNo, password)
+Auth -> DB : SELECT user WHERE rollNo = ?
+DB --> Auth : user record (hashed password)
+Auth -> Auth : verify(password, hash)
+
+alt credentials valid
+  Auth -> DB : reset failedAttempts, log success
+  Auth --> GW : JWT access token
+  GW --> Web : 200 OK { token }
+  Web --> Student : Redirect to Dashboard
+else invalid credentials
+  Auth -> DB : increment failedAttempts, log failure
+  alt failedAttempts >= 5
+    Auth -> DB : lock account (15 min)
+    Auth --> GW : 423 Locked
+  else
+    Auth --> GW : 401 Unauthorized
+  end
+  GW --> Web : error response
+  Web --> Student : Show error message
+end
+@enduml
