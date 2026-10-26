@@ -1,0 +1,11 @@
+[run]
+source = core, leaves, visitors, fees
+omit =
+    */migrations/*
+    */tests.py
+    */apps.py
+    */admin.py
+
+[report]
+fail_under = 70
+show_missing = True

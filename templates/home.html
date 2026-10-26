@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Welcome, {{ user.get_username }}</h1>
+  <p>Role: {{ role|default:"not assigned" }}</p>
+</div>
+<div class="card">
+  <h2>Notifications</h2>
+  {% for n in notifications %}
+    <p>{{ n.message }} <small>({{ n.created_at|date:"d M Y H:i" }})</small></p>
+  {% empty %}<p>No notifications.</p>{% endfor %}
+  {% if notifications %}
+  <form method="post" action="{% url 'notifications-read' %}">{% csrf_token %}<button type="submit">Mark all read</button></form>
+  {% endif %}
+</div>
+{% endblock %}

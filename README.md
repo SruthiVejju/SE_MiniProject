@@ -31,3 +31,24 @@ java -jar plantuml.jar -o .. docs/diagrams/src/*.puml
 ```
 
 (requires Java and Graphviz's `dot` on `PATH`)
+
+## Running the application
+
+```bash
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+## Tests, coverage and security scan
+
+```bash
+coverage run manage.py test && coverage report   # fails below 70% (NFR-5)
+bandit -r core leaves visitors fees config -x '*/tests.py,*/testutils.py' --severity-level high   # SEC-REQ-4
+```
+
+Cross-browser plan and results: [`docs/Cross_Browser_Test_Report.md`](docs/Cross_Browser_Test_Report.md).
+
+## Deviations from the submitted design
+
+The implementation uses Django (Python) monolith apps with server-rendered pages instead of the Node.js/Express services described in the Architecture document, and Django's session auth instead of JWT. Roles and hostel blocks are held in `core.UserProfile`.

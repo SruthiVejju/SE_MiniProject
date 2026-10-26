@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hostel Management System{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/hms.css' %}">
+</head>
+<body>
+  <header class="site">
+    <strong>Hostel Management System</strong>
+    <nav>
+      <a href="{% url 'home' %}">Home</a>
+      {% if user.is_authenticated %}
+        {% if user.profile.role == 'student' %}<a href="{% url 'leave-mine' %}">My Leave</a>{% endif %}
+        {% if user.profile.role == 'warden' %}<a href="{% url 'leave-pending' %}">Leave Requests</a>{% endif %}
+        {% if user.profile.role == 'security' %}<a href="{% url 'visitor-list' %}">Visitors</a>{% endif %}
+        {% if user.profile.role == 'admin' %}<a href="{% url 'fee-record' %}">Record Payment</a>{% endif %}
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% for message in messages %}<div class="msg {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

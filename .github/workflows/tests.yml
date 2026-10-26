@@ -1,0 +1,25 @@
+name: Tests, Coverage and Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run unit tests with coverage (fails below 70%)
+        run: |
+          coverage run manage.py test
+          coverage report
+      - name: Static security scan (fails on any high-severity finding)
+        run: bandit -r core leaves visitors fees config -x '*/tests.py,*/testutils.py' --severity-level high
