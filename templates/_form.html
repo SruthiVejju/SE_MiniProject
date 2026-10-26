@@ -1,0 +1,7 @@
+{% csrf_token %}
+{% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+{% for field in form %}
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {{ field.errors }}
+{% endfor %}

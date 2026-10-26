@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Visitors</h1>
+  <a class="btn" href="{% url 'visitor-entry' %}">Record entry</a>
+  <div class="table-wrap"><table>
+    <tr><th>Name</th><th>Purpose</th><th>Host</th><th>Entry</th><th>Exit</th><th></th></tr>
+    {% for v in visitors %}
+    <tr><td>{{ v.name }}</td><td>{{ v.purpose }}</td><td>{{ v.host_student.get_username }}</td>
+      <td>{{ v.entry_time|date:"d M Y H:i" }}</td><td>{{ v.exit_time|date:"d M Y H:i"|default:"-" }}</td>
+      <td>{% if v.is_inside %}<form method="post" action="{% url 'visitor-exit' v.pk %}" class="inline">{% csrf_token %}<button type="submit">Record exit</button></form>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="6">No visitors logged.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

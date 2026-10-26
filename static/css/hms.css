@@ -1,0 +1,22 @@
+/* Plain CSS only (flexbox, no vendor prefixes or bleeding-edge features) so it
+   renders the same in the latest two versions of Chrome, Firefox and Edge. */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; line-height: 1.5; color: #1f2937; background: #f3f4f6; }
+header.site { background: #1e3a8a; color: #fff; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+header.site a { color: #fff; margin-right: 12px; }
+main { max-width: 900px; margin: 16px auto; padding: 0 16px; }
+.card { background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+label { display: block; margin-top: 12px; font-weight: bold; }
+input, select, textarea { width: 100%; padding: 8px; border: 1px solid #9ca3af; border-radius: 4px; font: inherit; }
+button, .btn { display: inline-block; margin-top: 12px; padding: 8px 16px; border: 0; border-radius: 4px; background: #1d4ed8; color: #fff; font: inherit; cursor: pointer; text-decoration: none; }
+button.danger { background: #b91c1c; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb; }
+.table-wrap { overflow-x: auto; }
+.errorlist { color: #b91c1c; list-style: none; padding: 0; margin: 4px 0; }
+.msg { padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; background: #dbeafe; }
+.msg.error { background: #fee2e2; }
+.msg.success { background: #dcfce7; }
+.inline { display: inline; }
+@media (max-width: 600px) { header.site { display: block; } th, td { padding: 6px 4px; } }
+@media print { header.site, .no-print { display: none; } body { background: #fff; } }
