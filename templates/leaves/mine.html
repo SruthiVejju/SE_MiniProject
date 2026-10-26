@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>My Leave Requests</h1>
+  <a class="btn" href="{% url 'leave-submit' %}">New request</a>
+  <div class="table-wrap"><table>
+    <tr><th>Destination</th><th>From</th><th>To</th><th>Status</th></tr>
+    {% for l in leaves %}<tr><td>{{ l.destination }}</td><td>{{ l.from_date }}</td><td>{{ l.to_date }}</td><td>{{ l.get_status_display }}</td></tr>
+    {% empty %}<tr><td colspan="4">No requests yet.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

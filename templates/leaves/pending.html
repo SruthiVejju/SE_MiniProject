@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Leave Requests - Block {{ request.profile.block }}</h1>
+  <div class="table-wrap"><table>
+    <tr><th>Student</th><th>Destination</th><th>Dates</th><th>Reason</th><th>Status</th><th></th></tr>
+    {% for l in leaves %}
+    <tr>
+      <td>{{ l.student.get_username }}</td><td>{{ l.destination }}</td>
+      <td>{{ l.from_date }} - {{ l.to_date }}</td><td>{{ l.reason }}</td><td>{{ l.get_status_display }}</td>
+      <td>{% if l.status == 'pending' %}
+        <form method="post" action="{% url 'leave-decide' l.pk %}" class="inline">{% csrf_token %}
+          <button name="action" value="approve" type="submit">Approve</button>
+          <button name="action" value="reject" type="submit" class="danger">Reject</button>
+        </form>{% endif %}</td>
+    </tr>
+    {% empty %}<tr><td colspan="6">No requests.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}
