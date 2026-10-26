@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Fee Receipt</h1>
+  <p><strong>Receipt No:</strong> {{ payment.receipt_number }}</p>
+  <p><strong>Student:</strong> {{ payment.account.student.get_username }}</p>
+  <p><strong>Amount:</strong> {{ payment.amount }} ({{ payment.get_mode_display }})</p>
+  {% if payment.reference %}<p><strong>Reference:</strong> {{ payment.reference }}</p>{% endif %}
+  <p><strong>Date:</strong> {{ payment.paid_at|date:"d M Y H:i" }}</p>
+  <p><strong>Remaining due:</strong> {{ payment.account.due }}</p>
+  <a class="btn no-print" href="{% url 'fee-record' %}">Record another</a>
+</div>
+{% endblock %}
