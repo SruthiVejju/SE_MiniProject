@@ -1,0 +1,45 @@
+
+{% extends "base.html" %}
+
+{% block title %}Allocation Successful{% endblock %}
+
+{% block content %}
+<h1>Allocation Successful!</h1>
+
+<p>The student has been assigned a hostel bed.</p>
+
+<table border="1" cellpadding="10">
+  <tr>
+    <th>Student</th>
+    <td>{{ allocation.student.username }}</td>
+  </tr>
+  <tr>
+    <th>Block</th>
+    <td>{{ allocation.bed.room.block }}</td>
+  </tr>
+  <tr>
+    <th>Room</th>
+    <td>{{ allocation.bed.room.room_number }}</td>
+  </tr>
+  <tr>
+    <th>Bed</th>
+    <td>{{ allocation.bed.bed_number }}</td>
+  </tr>
+  <tr>
+    <th>Allocation Date</th>
+    <td>{{ allocation.allocated_at }}</td>
+  </tr>
+</table>
+
+<p>
+  <a href="{% url 'hostel:room_list' %}">
+    View All Allocations
+  </a>
+</p>
+
+<p>
+  <a href="{% url 'hostel:allocate' %}">
+    Allocate Another Bed
+  </a>
+</p>
+{% endblock %}

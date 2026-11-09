@@ -1,0 +1,36 @@
+
+{% extends "base.html" %}
+
+{% block title %}Allocate Bed{% endblock %}
+
+{% block content %}
+<h1>Allocate Room and Bed</h1>
+
+<p>Select a registered student and an available bed.</p>
+
+<form method="post">
+  {% csrf_token %}
+
+  {{ form.non_field_errors }}
+
+  <p>
+    {{ form.student.label_tag }}
+    {{ form.student }}
+    {{ form.student.errors }}
+  </p>
+
+  <p>
+    {{ form.bed.label_tag }}
+    {{ form.bed }}
+    {{ form.bed.errors }}
+  </p>
+
+  <button type="submit">Allocate Bed</button>
+</form>
+
+<p>
+  <a href="{% url 'hostel:room_list' %}">
+    View Rooms and Allocations
+  </a>
+</p>
+{% endblock %}
