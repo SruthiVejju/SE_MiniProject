@@ -1,0 +1,75 @@
+
+{% extends "base.html" %}
+
+{% block title %}Rooms and Beds{% endblock %}
+
+{% block content %}
+<h1>Hostel Rooms and Beds</h1>
+
+<p>
+  <a href="{% url 'hostel:allocate' %}">Allocate a Bed</a>
+</p>
+
+{% for room in rooms %}
+  <h2>{{ room }}</h2>
+  <p>Floor: {{ room.floor }}</p>
+
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Bed Number</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for bed in room.beds.all %}
+        <tr>
+          <td>{{ bed.bed_number }}</td>
+          <td>
+            {% if bed.is_occupied %}
+              Occupied
+            {% else %}
+              Available
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">No beds created.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% empty %}
+  <p>No rooms have been created yet.</p>
+{% endfor %}
+
+<h2>Current Allocations</h2>
+
+<table border="1" cellpadding="10">
+  <thead>
+    <tr>
+      <th>Student</th>
+      <th>Room</th>
+      <th>Bed</th>
+      <th>Allocated At</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for allocation in allocations %}
+      <tr>
+        <td>{{ allocation.student.username }}</td>
+        <td>{{ allocation.bed.room }}</td>
+        <td>{{ allocation.bed.bed_number }}</td>
+        <td>{{ allocation.allocated_at }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="4">No allocations yet.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
