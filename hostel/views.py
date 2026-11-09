@@ -1,4 +1,4 @@
-
+from fees.models import FeeAccount
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
@@ -72,3 +72,34 @@ def allocation_success(request, pk):
     return render(request, "hostel/allocation_success.html", {
         "allocation": allocation
     })
+
+
+@role_required(UserProfile.STUDENT)
+def student_dashboard(request):
+    allocation = (
+        Allocation.objects
+        .filter(
+            student=request.user,
+            is_active=True
+        )
+        .select_related("bed", "bed__room")
+        .first()
+    )
+
+    fee_account = FeeAccount.objects.filter(
+        student=request.user
+    ).first()
+
+    outstanding_dues = (
+        fee_account.due if fee_account else None
+    )
+
+    return render(
+        request,
+        "hostel/student_dashboard.html",
+        {
+            "allocation": allocation,
+            "fee_account": fee_account,
+            "outstanding_dues": outstanding_dues,
+        }
+    )

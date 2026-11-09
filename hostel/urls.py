@@ -12,4 +12,5 @@ urlpatterns = [
         views.allocation_success,
         name="allocation_success"
     ),
+    path("my-room/", views.student_dashboard, name="student_dashboard"),
 ]
