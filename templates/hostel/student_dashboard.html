@@ -1,0 +1,69 @@
+
+{% extends "base.html" %}
+
+{% block title %}My Hostel Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>My Hostel Dashboard</h1>
+
+    <section>
+        <h2>Room Allocation Details</h2>
+
+        {% if allocation %}
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Hostel Block</th>
+                        <td>{{ allocation.bed.room.block }}</td>
+                    </tr>
+                    <tr>
+                        <th>Room Number</th>
+                        <td>{{ allocation.bed.room.room_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Floor</th>
+                        <td>{{ allocation.bed.room.floor }}</td>
+                    </tr>
+                    <tr>
+                        <th>Bed Number</th>
+                        <td>{{ allocation.bed.bed_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Allocation Date</th>
+                        <td>{{ allocation.allocated_at|date:"d M Y" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <p>You currently do not have a room or bed allocation.</p>
+        {% endif %}
+    </section>
+
+    <section>
+        <h2>Fee Details</h2>
+
+        {% if fee_account %}
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Total Fee</th>
+                        <td>₹{{ fee_account.total_fee }}</td>
+                    </tr>
+                    <tr>
+                        <th>Amount Paid</th>
+                        <td>₹{{ fee_account.amount_paid }}</td>
+                    </tr>
+                    <tr>
+                        <th>Outstanding Dues</th>
+                        <td>₹{{ outstanding_dues }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <p>No fee account has been created for your account yet.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+

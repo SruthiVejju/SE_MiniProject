@@ -9,6 +9,10 @@ from .forms import AllocationForm
 from .models import Allocation, Bed, Room
 from .services import AllocationError, allocate_bed
 
+from decimal import Decimal
+
+from fees.models import FeeAccount
+
 
 class RoomAllocationTests(TestCase):
 
@@ -156,3 +160,119 @@ class RoomAllocationTests(TestCase):
             allocation.student.username,
             "student1"
         )
+
+
+class StudentDashboardTests(TestCase):
+
+    def setUp(self):
+        self.student = make_user(
+            "dashboard_student",
+            UserProfile.STUDENT
+        )
+
+        self.other_student = make_user(
+            "other_student",
+            UserProfile.STUDENT
+        )
+
+        self.room = Room.objects.create(
+            block="B",
+            room_number="202",
+            floor=2
+        )
+
+        self.bed = Bed.objects.create(
+            room=self.room,
+            bed_number="1",
+            is_occupied=True
+        )
+
+        self.allocation = Allocation.objects.create(
+            student=self.student,
+            bed=self.bed,
+            is_active=True
+        )
+
+        self.fee_account = FeeAccount.objects.create(
+            student=self.student,
+            total_fee=Decimal("50000.00"),
+            amount_paid=Decimal("30000.00")
+        )
+
+    def test_student_can_view_own_dashboard(self):
+        self.client.force_login(self.student)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "B")
+        self.assertContains(response, "202")
+        self.assertContains(response, "1")
+
+    def test_dashboard_displays_correct_fee_dues(self):
+        self.client.force_login(self.student)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["outstanding_dues"],
+            Decimal("20000.00")
+        )
+
+    def test_student_without_allocation_can_view_dashboard(self):
+        self.client.force_login(self.other_student)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["allocation"])
+
+    def test_student_without_fee_account_can_view_dashboard(self):
+        self.client.force_login(self.other_student)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["fee_account"])
+        self.assertIsNone(response.context["outstanding_dues"])
+
+    def test_admin_cannot_access_student_dashboard(self):
+        admin_user = make_user(
+            "dashboard_admin",
+            UserProfile.ADMIN
+        )
+
+        self.client.force_login(admin_user)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_unauthenticated_user_is_redirected_to_login(self):
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_student_cannot_view_another_students_allocation(self):
+        self.client.force_login(self.other_student)
+
+        response = self.client.get(
+            reverse("hostel:student_dashboard")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["allocation"])
+        self.assertNotContains(response, "dashboard_student")
