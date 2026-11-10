@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Submitted{% endblock %}
+
+{% block content %}
+<div class="card complaint-success">
+    <h2>Complaint Submitted Successfully!</h2>
+
+    <p>
+        Your maintenance complaint has been recorded.
+        Your complaint ID is shown below. Keep it for future reference.
+    </p>
+
+    <div class="complaint-id">
+        <strong>Complaint ID:</strong>
+        <p>{{ complaint.complaint_id }}</p>
+    </div>
+
+    <p>
+        <strong>Category:</strong>
+        {{ complaint.get_category_display }}
+    </p>
+
+    <p>
+        <strong>Description:</strong>
+        {{ complaint.description }}
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ complaint.get_status_display }}
+    </p>
+
+    <p>
+        <strong>Submitted:</strong>
+        {{ complaint.created_at }}
+    </p>
+
+    <a class="btn" href="{% url 'complaint-submit' %}">
+        Submit Another Complaint
+    </a>
+
+    <a class="btn" href="{% url 'home' %}">
+        Return to Home
+    </a>
+</div>
+{% endblock %}

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'leaves',
     'visitors',
     'fees',
+    'complaints',
 ]
 
 MIDDLEWARE = [
