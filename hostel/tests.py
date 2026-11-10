@@ -1,3 +1,5 @@
+from django.test.utils import CaptureQueriesContext
+from django.db import connection
 
 from django.test import TestCase
 from django.urls import reverse
@@ -218,6 +220,21 @@ class StudentDashboardTests(TestCase):
         self.assertContains(response, "B")
         self.assertContains(response, "202")
         self.assertContains(response, "1")
+
+    def test_dashboard_uses_limited_database_queries(self):
+        self.client.force_login(self.student)
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse("hostel:student_dashboard")
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(
+            len(queries),
+            5,
+            f"Dashboard executed {len(queries)} queries"
+        )
 
     def test_dashboard_displays_correct_fee_dues(self):
         self.client.force_login(self.student)

@@ -1,4 +1,4 @@
-from fees.models import FeeAccount
+
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
@@ -86,9 +86,7 @@ def student_dashboard(request):
         .first()
     )
 
-    fee_account = FeeAccount.objects.filter(
-        student=request.user
-    ).first()
+    fee_account = getattr(request.user, "fee_account", None)
 
     outstanding_dues = (
         fee_account.due if fee_account else None
