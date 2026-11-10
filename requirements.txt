@@ -1,3 +1,4 @@
 Django>=6.1,<6.2
 coverage>=7.6
 bandit>=1.8
+locust==2.47.0
