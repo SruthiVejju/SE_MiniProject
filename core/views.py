@@ -1,3 +1,6 @@
+from django.http import JsonResponse
+from django.db import connection
+
 from django.contrib.auth import login
 from django.db import transaction
 from django.contrib import messages
@@ -124,3 +127,20 @@ def user_logout(request):
         return redirect('login')
 
     return redirect('home')
+
+def health_check(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+
+        return JsonResponse({
+            "status": "healthy",
+            "database": "connected"
+        }, status=200)
+
+    except Exception:
+        return JsonResponse({
+            "status": "unhealthy",
+            "database": "disconnected"
+        }, status=503)
