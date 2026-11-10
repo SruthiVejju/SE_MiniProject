@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from hostel import views
+from core.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,5 +27,6 @@ urlpatterns = [
     path('fees/', include('fees.urls')),
     path('', include('core.urls')),
     path('hostel/', include('hostel.urls')),
+    path('health/', health_check, name='health_check'),
     path('complaints/', include('complaints.urls')),
 ]
