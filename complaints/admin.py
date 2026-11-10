@@ -9,8 +9,13 @@ class ComplaintAdmin(admin.ModelAdmin):
         'complaint_id',
         'student',
         'category',
+        'status',
         'created_at',
     )
-    list_filter = ('category', 'created_at')
-    search_fields = ('complaint_id', 'student__username', 'description')
+    list_filter = ('category', 'status', 'created_at')
+    search_fields = (
+        'complaint_id',
+        'student__username',
+        'description',
+    )
     readonly_fields = ('complaint_id', 'created_at')

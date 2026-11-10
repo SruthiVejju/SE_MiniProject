@@ -17,6 +17,16 @@ class Complaint(models.Model):
         (OTHER, 'Other'),
     ]
 
+    OPEN = 'open'
+    IN_PROGRESS = 'in_progress'
+    RESOLVED = 'resolved'
+
+    STATUS_CHOICES = [
+        (OPEN, 'Open'),
+        (IN_PROGRESS, 'In Progress'),
+        (RESOLVED, 'Resolved'),
+    ]
+
     complaint_id = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
@@ -32,6 +42,12 @@ class Complaint(models.Model):
         choices=CATEGORY_CHOICES
     )
     description = models.TextField(max_length=500)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=OPEN
+    )
+    remark = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

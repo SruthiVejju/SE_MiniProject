@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Complaints{% endblock %}
+
+{% block content %}
+<h2>Maintenance Complaints</h2>
+
+{% if complaints %}
+    {% for complaint in complaints %}
+        <section>
+            <h3>Complaint {{ complaint.complaint_id }}</h3>
+
+            <p><strong>Student:</strong> {{ complaint.student.username }}</p>
+            <p><strong>Category:</strong> {{ complaint.get_category_display }}</p>
+            <p><strong>Description:</strong> {{ complaint.description }}</p>
+            <p><strong>Status:</strong> {{ complaint.get_status_display }}</p>
+            <p><strong>Current Remark:</strong> {{ complaint.remark|default:"None" }}</p>
+            <p><strong>Submitted:</strong> {{ complaint.created_at }}</p>
+
+            <form method="post" action="{% url 'complaint-update' complaint.pk %}">
+                {% csrf_token %}
+
+                <label for="status-{{ complaint.pk }}">Update Status:</label>
+                <select name="status" id="status-{{ complaint.pk }}">
+                    {% for value, label in complaint.STATUS_CHOICES %}
+                        <option value="{{ value }}"
+                            {% if complaint.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="remark-{{ complaint.pk }}">Remark (optional):</label>
+                <textarea name="remark" id="remark-{{ complaint.pk }}" rows="3">{{ complaint.remark }}</textarea>
+
+                <button type="submit">Update Complaint</button>
+            </form>
+        </section>
+        <hr>
+    {% endfor %}
+{% else %}
+    <p>No maintenance complaints found for your block.</p>
+{% endif %}
+
+{% endblock %}

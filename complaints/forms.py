@@ -21,3 +21,11 @@ class ComplaintForm(forms.ModelForm):
             10,
             500
         )
+
+class ComplaintUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Complaint
+        fields = ['status', 'remark']
+        widgets = {
+            'remark': forms.Textarea(attrs={'rows': 3}),
+        }

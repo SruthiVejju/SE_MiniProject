@@ -22,6 +22,9 @@
           <a href="{% url 'hostel:student_dashboard' %}">My Hostel</a>
         {% endif %}
         {% if user.profile.role == 'warden' %}<a href="{% url 'leave-pending' %}">Leave Requests</a>{% endif %}
+        {% if user.profile.role == 'warden' %}
+          <a href="{% url 'complaint-list' %}">Manage Complaints</a>
+        {% endif %}
         {% if user.profile.role == 'security' %}<a href="{% url 'visitor-list' %}">Visitors</a>{% endif %}
         {% if user.profile.role == 'admin' %}<a href="{% url 'fee-record' %}">Record Payment</a>{% endif %}
         {% if user.profile.role == 'admin' %}
