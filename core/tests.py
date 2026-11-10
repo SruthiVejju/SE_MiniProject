@@ -5,7 +5,7 @@ from django.urls import reverse
 from .models import Notification, UserProfile
 from .testutils import make_user
 from .validators import clean_text_field, sanitize_text, validate_length
-
+from django.contrib.auth.models import User
 
 class SanitizeTests(TestCase):
     def test_strips_script_tags(self):
@@ -78,3 +78,60 @@ class HomeAndNotificationTests(TestCase):
         n = Notification.objects.create(user=self.user, message='m')
         self.assertIn('m', str(n))
         self.assertIn('student', str(self.user.profile))
+
+
+
+class StudentRegistrationTests(TestCase):
+
+    def test_successful_registration(self):
+        response = self.client.post(reverse('register'), {
+            'username': 'newstudent01',
+            'first_name': 'Ananya',
+            'last_name': 'Sharma',
+            'email': 'ananya.test02@example.com',
+            'block': 'A',
+            'password1': 'HMS_Test@2026Secure',
+            'password2': 'HMS_Test@2026Secure',
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        user = User.objects.get(username='newstudent01')
+        self.assertEqual(user.email, 'ananya.test02@example.com')
+        self.assertEqual(user.profile.role, UserProfile.STUDENT)
+        self.assertEqual(user.profile.block, 'A')
+        self.assertTrue(user.check_password('HMS_Test@2026Secure'))
+
+    def test_registration_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username='existing',
+            email='ananya.test02@example.com',
+            password='Existing@123'
+        )
+
+        response = self.client.post(reverse('register'), {
+            'username': 'newstudent02',
+            'first_name': 'Ananya',
+            'last_name': 'Sharma',
+            'email': 'ananya.test02@example.com',
+            'block': 'A',
+            'password1': 'HMS_Test@2026Secure',
+            'password2': 'HMS_Test@2026Secure',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username='newstudent02').exists())
+
+    def test_registration_rejects_password_mismatch(self):
+        response = self.client.post(reverse('register'), {
+            'username': 'newstudent03',
+            'first_name': 'Ananya',
+            'last_name': 'Sharma',
+            'email': 'ananya.test03@example.com',
+            'block': 'A',
+            'password1': 'HMS_Test@2026Secure',
+            'password2': 'Different@2026Secure',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username='newstudent03').exists())

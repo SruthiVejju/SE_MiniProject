@@ -1,0 +1,17 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Student Registration | HMS{% endblock %}
+
+{% block content %}
+<section class="form-container">
+    <h1>Student Registration</h1>
+    <p>Create your Hostel Management System account.</p>
+
+    <form method="POST">
+        {% include '_form.html' %}
+        <button type="submit">Register</button>
+    </form>
+
+</section>
+{% endblock %}
