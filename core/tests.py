@@ -106,6 +106,7 @@ class StudentRegistrationTests(TestCase):
         self.assertEqual(user.email, 'ananya.test02@example.com')
         self.assertEqual(user.profile.role, UserProfile.STUDENT)
         self.assertEqual(user.profile.block, 'A')
+        self.assertNotEqual(user.password, 'HMS_Test@2026Secure')
         self.assertTrue(user.check_password('HMS_Test@2026Secure'))
 
     def test_registration_rejects_duplicate_email(self):
