@@ -299,3 +299,47 @@ class ComplaintManagementTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 405)
+
+class ComplaintUsabilityTests(TestCase):
+    def setUp(self):
+        self.student = make_user(
+            'usability_student',
+            UserProfile.STUDENT,
+            'A'
+        )
+        self.client.force_login(self.student)
+        self.url = reverse('complaint-submit')
+
+    def test_form_has_clear_heading_and_instructions(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'Submit a Maintenance Complaint')
+        self.assertContains(response, 'Having a problem')
+        self.assertContains(response, 'Fields marked with * are required.')
+
+    def test_form_explains_description_length(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'between 10 and 500 characters')
+        self.assertContains(response, 'maxlength="500"')
+
+    def test_form_has_example_description(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(
+            response,
+            'The lights in my room are not working.'
+        )
+
+    def test_success_page_shows_complaint_id_and_next_steps(self):
+        response = self.client.post(
+            self.url,
+            complaint_payload()
+        )
+
+        complaint = Complaint.objects.get()
+
+        self.assertContains(response, 'Complaint Submitted Successfully!')
+        self.assertContains(response, str(complaint.complaint_id))
+        self.assertContains(response, 'Submit Another Complaint')
+        self.assertContains(response, 'Return to Home')
