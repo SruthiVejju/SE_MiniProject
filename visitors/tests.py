@@ -63,10 +63,22 @@ class VisitorTests(TestCase):
         self.assertEqual(Visitor.objects.count(), 1)
 
     def test_only_security_guard_allowed(self):
-        for user in (self.student, make_user('adm', UserProfile.ADMIN)):
-            self.client.force_login(user)
-            self.assertEqual(self.client.get(reverse('visitor-list')).status_code, 403)
-            self.assertEqual(self.client.post(reverse('visitor-entry'), {}).status_code, 403)
+        unauthorized_users = [
+            self.student,
+            make_user('adm', UserProfile.ADMIN),
+            make_user('ward', UserProfile.WARDEN),
+        ]
+
+        for user in unauthorized_users:
+            with self.subTest(role=user.profile.role):
+                self.client.force_login(user)
+
+                self.assertEqual(
+                    self.client.get(reverse('visitor-list')).status_code, 403
+                )
+                self.assertEqual(
+                    self.client.post(reverse('visitor-entry'), {}).status_code, 403
+                )
 
     def test_list_shows_visitors(self):
         self.entry()

@@ -267,24 +267,22 @@ class ComplaintManagementTests(TestCase):
         self.complaint_a.refresh_from_db()
         self.assertEqual(self.complaint_a.status, Complaint.OPEN)
 
-    def test_student_cannot_access_warden_dashboard(self):
-        self.client.force_login(self.student_a)
+    
+    def test_non_warden_cannot_access_warden_dashboard(self):
+        unauthorized_users = [
+            self.student_a,
+            make_user('complaint_admin2', UserProfile.ADMIN, 'A'),
+            make_user('complaint_security', UserProfile.SECURITY, 'A'),
+        ]
 
-        response = self.client.get(self.url)
+        for user in unauthorized_users:
+            with self.subTest(role=user.profile.role):
+                self.client.force_login(user)
 
-        self.assertEqual(response.status_code, 403)
+                response = self.client.get(self.url)
 
-    def test_admin_cannot_access_warden_dashboard(self):
-        admin = make_user(
-            'complaint_admin',
-            UserProfile.ADMIN,
-            'A'
-        )
-        self.client.force_login(admin)
+                self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 403)
 
     def test_anonymous_user_cannot_access_warden_dashboard(self):
         self.client.logout()
