@@ -97,14 +97,22 @@ class RoomAllocationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_student_cannot_access_allocation_page(self):
-        self.client.force_login(self.student1)
+    
+    def test_non_admin_cannot_access_allocation_page(self):
+        unauthorized_users = [
+            self.student1,
+            self.warden,
+            make_user("hostel_security", UserProfile.SECURITY),
+        ]
 
-        response = self.client.get(
-            reverse("hostel:allocate")
-        )
+        for user in unauthorized_users:
+            with self.subTest(role=user.profile.role):
+                self.client.force_login(user)
 
-        self.assertEqual(response.status_code, 403)
+                response = self.client.get(reverse("hostel:allocate"))
+
+                self.assertEqual(response.status_code, 403)
+
 
     def test_admin_can_allocate_using_form(self):
         self.client.force_login(self.admin_user)

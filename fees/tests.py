@@ -70,6 +70,21 @@ class FeeTests(TestCase):
         self.pay()
         p = FeePayment.objects.get()
         self.assertContains(self.client.get(reverse('fee-receipt', args=[p.pk])), p.receipt_number)
-        self.client.force_login(self.student)
-        self.assertEqual(self.client.get(reverse('fee-receipt', args=[p.pk])).status_code, 403)
-        self.assertEqual(self.client.post(reverse('fee-record'), {}).status_code, 403)
+        unauthorized_users = [
+        self.student,
+        make_user('fee_warden', UserProfile.WARDEN),
+        make_user('fee_security', UserProfile.SECURITY),
+    ]
+
+        for user in unauthorized_users:
+            with self.subTest(role=user.profile.role):
+                self.client.force_login(user)
+
+                self.assertEqual(
+                    self.client.get(reverse('fee-receipt', args=[p.pk])).status_code,
+                    403
+                )
+                self.assertEqual(
+                    self.client.post(reverse('fee-record'), {}).status_code,
+                    403
+                )

@@ -76,9 +76,26 @@ class SubmitLeaveTests(LeaveBase):
         self.client.post(reverse('leave-submit'), payload())
         self.assertIsNone(LeaveRequest.objects.get().warden)
 
+
     def test_only_students_can_submit(self):
-        self.client.force_login(self.warden_a)
-        self.assertEqual(self.client.get(reverse('leave-submit')).status_code, 403)
+        unauthorized_users = [
+            self.warden_a,
+            self.warden_b,
+            make_user('leave_admin', UserProfile.ADMIN),
+            make_user('leave_security', UserProfile.SECURITY),
+        ]
+
+        for user in unauthorized_users:
+            with self.subTest(role=user.profile.role):
+                self.client.force_login(user)
+
+                response = self.client.post(
+                    reverse('leave-submit'),
+                    payload()
+                )
+
+                self.assertEqual(response.status_code, 403)
+
 
     def test_my_requests_only_lists_own(self):
         other = make_user('stu2', UserProfile.STUDENT, 'A')
