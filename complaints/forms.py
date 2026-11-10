@@ -9,9 +9,29 @@ class ComplaintForm(forms.ModelForm):
     class Meta:
         model = Complaint
         fields = ['category', 'description']
+        labels = {
+            'category': 'Complaint Category',
+            'description': 'Describe the Problem',
+        }
+        help_texts = {
+            'category': 'Choose the category that best matches your issue.',
+            'description': (
+                'Explain the problem clearly. '
+                'Enter between 10 and 500 characters.'
+            ),
+        }
         widgets = {
-            'category': forms.Select(),
-            'description': forms.Textarea(attrs={'rows': 5}),
+            'category': forms.Select(attrs={
+                'class': 'form-control',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'maxlength': 500,
+                'placeholder': (
+                    'Example: The lights in my room are not working.'
+                ),
+            }),
         }
 
     def clean_description(self):
@@ -21,7 +41,6 @@ class ComplaintForm(forms.ModelForm):
             10,
             500
         )
-
 class ComplaintUpdateForm(forms.ModelForm):
     class Meta:
         model = Complaint
