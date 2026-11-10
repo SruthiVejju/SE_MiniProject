@@ -7,6 +7,12 @@ from .testutils import make_user
 from .validators import clean_text_field, sanitize_text, validate_length
 from django.contrib.auth.models import User
 
+from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+
+from .models import LoginAttempt
+
 class SanitizeTests(TestCase):
     def test_strips_script_tags(self):
         self.assertNotIn('<', sanitize_text('<script>alert(1)</script>hello'))
@@ -135,3 +141,93 @@ class StudentRegistrationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(username='newstudent03').exists())
+
+
+
+class LoginAndLockoutTests(TestCase):
+
+    def setUp(self):
+        self.user = make_user('loginstudent', UserProfile.STUDENT)
+        self.login_url = reverse('login')
+
+    def test_successful_login(self):
+        self.user.set_password('StrongPass@123')
+        self.user.save()
+
+        response = self.client.post(self.login_url, {
+            'username': 'loginstudent',
+            'password': 'StrongPass@123',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('_auth_user_id' in self.client.session)
+
+    def test_invalid_password_increments_attempts(self):
+        self.user.set_password('StrongPass@123')
+        self.user.save()
+
+        self.client.post(self.login_url, {
+            'username': 'loginstudent',
+            'password': 'WrongPass@123',
+        })
+
+        attempt = LoginAttempt.objects.get(user=self.user)
+        self.assertEqual(attempt.failed_attempts, 1)
+
+    def test_five_failed_attempts_lock_account(self):
+        self.user.set_password('StrongPass@123')
+        self.user.save()
+
+        for _ in range(5):
+            self.client.post(self.login_url, {
+                'username': 'loginstudent',
+                'password': 'WrongPass@123',
+            })
+
+        attempt = LoginAttempt.objects.get(user=self.user)
+        self.assertTrue(attempt.is_locked())
+        self.assertIsNotNone(attempt.locked_until)
+
+    def test_correct_password_rejected_during_lockout(self):
+        self.user.set_password('StrongPass@123')
+        self.user.save()
+
+        attempt = LoginAttempt.objects.create(
+            user=self.user,
+            failed_attempts=0,
+            locked_until=timezone.now() + timedelta(minutes=15),
+        )
+
+        response = self.client.post(self.login_url, {
+            'username': 'loginstudent',
+            'password': 'StrongPass@123',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('_auth_user_id' in self.client.session)
+
+    def test_successful_login_resets_attempts(self):
+        self.user.set_password('StrongPass@123')
+        self.user.save()
+
+        attempt = LoginAttempt.objects.create(
+            user=self.user,
+            failed_attempts=3,
+        )
+
+        self.client.post(self.login_url, {
+            'username': 'loginstudent',
+            'password': 'StrongPass@123',
+        })
+
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.failed_attempts, 0)
+        self.assertIsNone(attempt.locked_until)
+
+    def test_logout(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('logout'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('_auth_user_id', self.client.session)

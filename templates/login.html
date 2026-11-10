@@ -1,0 +1,18 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Login | Hostel Management System{% endblock %}
+
+{% block content %}
+<section class="form-container">
+    <h1>Welcome Back</h1>
+    <p>Login to your Hostel Management System account.</p>
+
+    <form method="POST">
+        {% include '_form.html' %}
+        <button type="submit">Login</button>
+    </form>
+
+    <p>New student? <a href="{% url 'register' %}">Register here</a></p>
+</section>
+{% endblock %}
