@@ -36,3 +36,37 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'{self.user}: {self.message}'
+
+
+from django.utils import timezone
+from datetime import timedelta
+
+
+class LoginAttempt(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='login_attempt'
+    )
+    failed_attempts = models.PositiveIntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
+
+    def is_locked(self):
+        return self.locked_until is not None and self.locked_until > timezone.now()
+
+    def record_failure(self):
+        self.failed_attempts += 1
+
+        if self.failed_attempts >= 5:
+            self.locked_until = timezone.now() + timedelta(minutes=15)
+            self.failed_attempts = 0
+
+        self.save()
+
+    def reset(self):
+        self.failed_attempts = 0
+        self.locked_until = None
+        self.save()
+
+    def __str__(self):
+        return f'{self.user.username}: {self.failed_attempts} failed attempts'
