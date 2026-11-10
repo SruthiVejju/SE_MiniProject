@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Maintenance Complaint{% endblock %}
+
+{% block content %}
+<h2>Submit Maintenance Complaint</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit Complaint</button>
+</form>
+{% endblock %}

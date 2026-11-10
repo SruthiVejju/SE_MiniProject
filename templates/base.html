@@ -16,6 +16,9 @@
       {% if user.is_authenticated %}
         {% if user.profile.role == 'student' %}<a href="{% url 'leave-mine' %}">My Leave</a>{% endif %}
         {% if user.profile.role == 'student' %}
+          <a href="{% url 'complaint-submit' %}">Maintenance Complaints</a>
+        {% endif %}
+        {% if user.profile.role == 'student' %}
           <a href="{% url 'hostel:student_dashboard' %}">My Hostel</a>
         {% endif %}
         {% if user.profile.role == 'warden' %}<a href="{% url 'leave-pending' %}">Leave Requests</a>{% endif %}
