@@ -18,7 +18,14 @@
         {% if user.profile.role == 'warden' %}<a href="{% url 'leave-pending' %}">Leave Requests</a>{% endif %}
         {% if user.profile.role == 'security' %}<a href="{% url 'visitor-list' %}">Visitors</a>{% endif %}
         {% if user.profile.role == 'admin' %}<a href="{% url 'fee-record' %}">Record Payment</a>{% endif %}
-      {% endif %}
+        <form method="POST" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+{% else %}
+    <a href="{% url 'login' %}">Login</a>
+    <a href="{% url 'register' %}">Register</a>
+        {% endif %}
     </nav>
   </header>
   <main>

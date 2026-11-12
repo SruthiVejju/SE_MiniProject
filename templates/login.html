@@ -1,0 +1,52 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Login | Hostel Management System{% endblock %}
+
+{% block content %}
+
+<div class="registration-container">
+
+    <h2>Hostel Management System Login</h2>
+
+    <p>Enter your registered ID and password to continue.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div>
+            <label for="username">Student / Employee ID:</label>
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your roll number or employee ID"
+                required
+                autocomplete="username"
+            >
+        </div>
+
+        <div>
+            <label for="password">Password:</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+            >
+        </div>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <p>
+        New student?
+        <a href="{% url 'register' %}">Register here</a>
+    </p>
+
+</div>
+
+{% endblock %}
