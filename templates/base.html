@@ -16,6 +16,8 @@
       <a href="{% url 'home' %}">Home</a>
 
       {% if user.is_authenticated %}
+        <a href="{% url 'notices:list' %}">Notices</a>
+
         {% if user.profile.role == 'student' %}
           <a href="{% url 'leave-mine' %}">My Leave</a>
           <a href="{% url 'complaint-submit' %}">Maintenance Complaints</a>
@@ -35,6 +37,8 @@
           <a href="{% url 'fee-record' %}">Record Payment</a>
           <a href="{% url 'hostel:room_list' %}">Rooms and Beds</a>
           <a href="{% url 'hostel:allocate' %}">Allocate Bed</a>
+          <a href="{% url 'hostel:occupancy_report' %}">Occupancy Report</a>
+          <a href="{% url 'audit-logs' %}">Audit Logs</a>
         {% endif %}
 
         <form method="POST" action="{% url 'logout' %}">

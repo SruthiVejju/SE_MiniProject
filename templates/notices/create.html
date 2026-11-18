@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Publish Hostel Notice{% endblock %}
+
+{% block content %}
+<section class="card complaint-form">
+  <h2>Publish Hostel Notice (FR-11)</h2>
+  <p class="form-note">Notices can be broadcast to all students or restricted to residents of a specific block.</p>
+
+  <form method="POST">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="field-error">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label for="{{ form.title.id_for_label }}">Notice Title:</label>
+      {{ form.title }}
+      {% if form.title.errors %}
+        <div class="field-error">{{ form.title.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.target_block.id_for_label }}">Target Audience:</label>
+      {{ form.target_block }}
+      <small>{{ form.target_block.help_text }}</small>
+      {% if form.target_block.errors %}
+        <div class="field-error">{{ form.target_block.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.content.id_for_label }}">Notice Content:</label>
+      {{ form.content }}
+      {% if form.content.errors %}
+        <div class="field-error">{{ form.content.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn">Publish Notice</button>
+    <a href="{% url 'notices:list' %}" class="btn">Cancel</a>
+  </form>
+</section>
+{% endblock %}

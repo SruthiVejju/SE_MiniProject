@@ -70,3 +70,44 @@ class LoginAttempt(models.Model):
 
     def __str__(self):
         return f'{self.user.username}: {self.failed_attempts} failed attempts'
+
+
+class AuditLog(models.Model):
+    """
+    Append-only audit log for security events and administrative actions (SEC-REQ-5).
+    Retained for at least one year. Modification or deletion through normal application
+    operations is strictly prevented.
+    """
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
+    action = models.CharField(max_length=64, db_index=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='audit_entries'
+    )
+    actor_username = models.CharField(max_length=150, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    details = models.JSONField(default=dict, blank=True)
+    retention_until = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Audit Log Entry'
+        verbose_name_plural = 'Audit Log Entries'
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise PermissionError("Audit log entries are immutable and cannot be updated.")
+        if not self.retention_until:
+            now = self.timestamp or timezone.now()
+            self.retention_until = now + timedelta(days=365)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError("Audit log entries cannot be deleted through application operations.")
+
+    def __str__(self):
+        return f"[{self.timestamp:%Y-%m-%d %H:%M:%S}] {self.action} by {self.actor_username or 'System'}"
+

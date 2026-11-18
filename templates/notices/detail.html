@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ notice.title }} - Notice Details{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h2>{{ notice.title }}</h2>
+  <div class="notice-meta">
+    <span>Published: {{ notice.created_at|date:"F j, Y, g:i a" }}</span> |
+    <span>Audience:
+      {% if notice.is_general %}
+        <span class="badge badge-info">All Students</span>
+      {% else %}
+        <span class="badge badge-warning">Block {{ notice.target_block }}</span>
+      {% endif %}
+    </span> |
+    <span>Posted by: {{ notice.posted_by.username }}</span>
+  </div>
+
+  <div class="card notice-content">
+    {{ notice.content }}
+  </div>
+
+  <div>
+    <a href="{% url 'notices:list' %}" class="btn">Back to Notices</a>
+  </div>
+</section>
+{% endblock %}

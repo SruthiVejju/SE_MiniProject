@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Audit Logs - Hostel Management System{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h2>Security & Administrative Audit Logs (SEC-REQ-5)</h2>
+  <p>Append-only audit trail retained for a minimum of 365 days. Records are immutable and protected against deletion or tampering.</p>
+
+  <form method="GET" class="filter-row">
+    <div class="filter-group">
+      <label for="action-filter">Filter by Action:</label>
+      <select name="action" id="action-filter">
+        <option value="">All Actions</option>
+        {% for a in distinct_actions %}
+          <option value="{{ a }}" {% if a == action_filter %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="username-filter">Filter by Actor Username:</label>
+      <input type="text" name="username" id="username-filter" value="{{ username_filter }}" placeholder="e.g. admin">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn">Filter</button>
+      {% if action_filter or username_filter %}
+        <a href="{% url 'audit-logs' %}" class="btn">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <p><strong>Total records:</strong> {{ total_count }}</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp (UTC)</th>
+          <th>Action</th>
+          <th>Actor</th>
+          <th>IP Address</th>
+          <th>Details</th>
+          <th>Retention Until</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in logs %}
+          <tr>
+            <td>{{ entry.timestamp|date:"Y-m-d H:i:s" }}</td>
+            <td><code>{{ entry.action }}</code></td>
+            <td>{{ entry.actor_username|default:"System" }}</td>
+            <td>{{ entry.ip_address|default:"-" }}</td>
+            <td><pre class="json-detail">{{ entry.details }}</pre></td>
+            <td>{{ entry.retention_until|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">No audit logs recorded matching the criteria.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

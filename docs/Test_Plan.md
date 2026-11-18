@@ -122,6 +122,8 @@ Testing is suspended if the staging environment becomes unavailable or if a Crit
 | TC-04 | Complaint submission with valid description | Student is logged in | 1. Submit `POST /api/complaints` with category `Electrical` and a 50-character description. | Server responds `201 Created` with a unique complaint ID. | FR-5 |
 | TC-05 | Warden updates complaint status | A complaint exists in `Open` status for the warden's block | 1. Warden submits `PATCH /api/complaints/{id}` with status `In-Progress` and a remark. | Server responds `200 OK`; complaint status is updated and visible to the student. | FR-6 |
 | TC-06 | Cash fee payment generates a receipt | Student has an outstanding due balance | 1. Admin submits `POST /api/fees/payments` with mode `CASH` and a valid amount. | Server responds `201 Created` with a unique receipt number; the student's due balance decreases by the paid amount. | FR-10 |
+| TC-11 | Publish notice to all students and block-specific notice | Admin is logged in; students in Block A and Block B exist | 1. Admin posts general notice. 2. Admin posts Block A notice. 3. Students check visibility. | General notice is visible to all students; Block A notice is visible only to Block A students. | FR-11 |
+| TC-12 | Generate hostel occupancy report with PDF export | Rooms, beds, and active allocations exist in the database | 1. Admin visits `/hostel/reports/occupancy/`. 2. Admin downloads PDF report. | Metrics match active allocation records; PDF stream is generated with valid structure. | FR-12 |
 
 ### 5.3 Non-Functional Test Cases
 
@@ -129,6 +131,9 @@ Testing is suspended if the staging environment becomes unavailable or if a Crit
 |---|---|---|---|---|---|
 | TC-07 | Dashboard response time under load | Staging environment seeded with 5,000 student accounts | 1. Simulate 200 concurrent virtual users requesting `GET /api/students/{id}/allocation`. 2. Measure response times. | 95% of requests complete within 2 seconds. | NFR-1, NFR-4 |
 | TC-08 | Cross-browser rendering | Web client deployed to staging | 1. Load the Student dashboard on the latest two major versions of Chrome, Firefox, and Edge. | UI renders correctly and is fully functional on all six browser/version combinations. | NFR-6 |
+| TC-13 | Request persistence before acknowledgment & restart resilience | Student is logged in | 1. Submit complaint / leave request. 2. Verify immediate database persistence. 3. Drop all DB connections (cold restart). 4. Re-query. | Records survive server restart without data loss or corruption. | NFR-7 |
+| TC-14 | Versioned REST API compatibility | Client integrations exist on `/api/v1/` | 1. Query `/api/v1/notices/`. 2. Query `/api/v2/notices/`. | v1 returns flat schema; v2 returns enveloped schema with metadata; v1 clients remain unbroken. | NFR-8 |
+| TC-15 | Append-only audit logging and 1-year retention | System initialized | 1. Perform logins, failed logins, room allocations, fee payments. 2. Attempt log mutation or deletion. 3. Check retention policy. | Logs are recorded; mutations raise PermissionError; retention is >= 365 days. | SEC-REQ-5 |
 
 ---
 
@@ -142,14 +147,22 @@ Testing is suspended if the staging environment becomes unavailable or if a Crit
 | FR-4 | TC-07 |
 | FR-5 | TC-04 |
 | FR-6 | TC-05 |
-| FR-7, FR-8 | *(Planned for Part-2 execution cycle — see Section 8)* |
-| FR-9, FR-11, FR-12 | *(Planned for Part-2 execution cycle — see Section 8)* |
+| FR-7, FR-8 | TC-13 |
+| FR-9 | *(Visitors gate logging)* |
 | FR-10 | TC-06 |
+| FR-11 | TC-11 |
+| FR-12 | TC-12 |
 | NFR-1, NFR-4 | TC-07 |
+| NFR-5 | Automated unit test coverage gate (>= 70%) |
 | NFR-6 | TC-08 |
+| NFR-7 | TC-13 |
+| NFR-8 | TC-14 |
+| SEC-REQ-1 | Password hashing verification |
 | SEC-REQ-2 | TC-09 |
+| SEC-REQ-3 | HTTPS & TLS enforcement check |
 | SEC-REQ-4 | TC-10 |
-| SEC-REQ-1, SEC-REQ-3, SEC-REQ-5 | *(Planned for Part-2 execution cycle — see Section 8)* |
+| SEC-REQ-5 | TC-15 |
+
 
 ---
 

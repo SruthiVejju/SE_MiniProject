@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
+from core.audit import FEE_PAYMENT_RECORDED, log_audit_event
 from .models import FeeAccount, FeePayment
 
 
@@ -31,4 +32,18 @@ def record_payment(account_id, amount, mode, reference, admin_user):
 
     account.amount_paid += amount
     account.save(update_fields=['amount_paid'])
+
+    log_audit_event(
+        FEE_PAYMENT_RECORDED,
+        actor=admin_user,
+        actor_username=getattr(admin_user, 'username', '') if admin_user else '',
+        details={
+            'account_id': account.pk,
+            'student': str(account.student.username),
+            'amount': str(amount),
+            'mode': mode,
+            'receipt_number': payment.receipt_number,
+        }
+    )
+
     return payment

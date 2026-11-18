@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     'visitors',
     'fees',
     'complaints',
+    'notices',
+    'api',
 ]
 
 MIDDLEWARE = [

@@ -4,6 +4,25 @@
   <h1>Welcome, {{ user.get_username }}</h1>
   <p>Role: {{ role|default:"not assigned" }}</p>
 </div>
+
+<div class="card">
+  <h2>Hostel Notices & Announcements</h2>
+  {% for notice in latest_notices %}
+    <p>
+      <strong><a href="{% url 'notices:detail' notice.pk %}">{{ notice.title }}</a></strong>
+      <small>({{ notice.created_at|date:"d M Y" }})</small>
+      {% if notice.is_general %}
+        <span class="badge badge-info">All Students</span>
+      {% else %}
+        <span class="badge badge-warning">Block {{ notice.target_block }}</span>
+      {% endif %}
+    </p>
+  {% empty %}
+    <p>No notices have been published yet.</p>
+  {% endfor %}
+  <p><a href="{% url 'notices:list' %}" class="btn">View All Notices</a></p>
+</div>
+
 <div class="card">
   <h2>Notifications</h2>
   {% for n in notifications %}

@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -16,9 +17,10 @@ def submit_complaint(request):
     )
 
     if request.method == 'POST' and form.is_valid():
-        complaint = form.save(commit=False)
-        complaint.student = request.user
-        complaint.save()
+        with transaction.atomic():
+            complaint = form.save(commit=False)
+            complaint.student = request.user
+            complaint.save()
 
         return render(
             request,
