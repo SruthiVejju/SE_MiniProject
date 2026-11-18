@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Hostel Notices & Announcements{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h2>Hostel Notices & Announcements</h2>
+  <p class="form-note">Stay updated with important hostel guidelines, schedules, and circulars.</p>
+
+  <div class="filter-row">
+    <div class="filter-group">
+      <form method="GET" class="inline">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search notices by keyword...">
+      </form>
+    </div>
+    <div class="filter-actions">
+      {% if profile and profile.role == 'admin' %}
+        <a href="{% url 'notices:create' %}" class="btn">Publish Notice</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Target</th>
+          <th>Posted By</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for notice in notices %}
+          <tr>
+            <td>{{ notice.created_at|date:"Y-m-d" }}</td>
+            <td><strong>{{ notice.title }}</strong></td>
+            <td>
+              {% if notice.is_general %}
+                <span class="badge badge-info">All Students</span>
+              {% else %}
+                <span class="badge badge-warning">Block {{ notice.target_block }}</span>
+              {% endif %}
+            </td>
+            <td>{{ notice.posted_by.username }}</td>
+            <td>
+              <a href="{% url 'notices:detail' notice.pk %}" class="btn">Read Notice</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">No notices have been published yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

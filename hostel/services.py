@@ -1,6 +1,7 @@
 
 from django.db import IntegrityError, OperationalError, transaction
 
+from core.audit import ROOM_ALLOCATION_CREATED, log_audit_event
 from core.models import UserProfile
 from .models import Allocation, Bed
 
@@ -9,11 +10,12 @@ class AllocationError(Exception):
     pass
 
 
-def allocate_bed(student, bed_id):
+def allocate_bed(student, bed_id, admin_user=None):
     """
     Allocate a vacant bed to a registered student.
     Prevent duplicate student and bed allocations.
     """
+
 
     if not UserProfile.objects.filter(
         user=student,
@@ -53,6 +55,19 @@ def allocate_bed(student, bed_id):
 
             bed.is_occupied = True
             bed.save(update_fields=["is_occupied"])
+
+            log_audit_event(
+                ROOM_ALLOCATION_CREATED,
+                actor=admin_user,
+                actor_username=getattr(admin_user, 'username', '') if admin_user else '',
+                details={
+                    'student': student.username,
+                    'bed_id': bed.pk,
+                    'room': str(bed.room),
+                    'block': bed.room.block,
+                    'bed_number': bed.bed_number,
+                }
+            )
 
             return allocation
 

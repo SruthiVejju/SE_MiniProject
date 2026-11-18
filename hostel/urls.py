@@ -13,4 +13,6 @@ urlpatterns = [
         name="allocation_success"
     ),
     path("my-room/", views.student_dashboard, name="student_dashboard"),
+    path("reports/occupancy/", views.occupancy_report, name="occupancy_report"),
+    path("reports/occupancy/pdf/", views.occupancy_report, {"format": "pdf"}, name="occupancy_report_pdf"),
 ]

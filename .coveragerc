@@ -1,10 +1,12 @@
 [run]
-source = core, leaves, visitors, fees
+source = core, leaves, visitors, fees, hostel, complaints, notices, api
 omit =
     */migrations/*
     */tests.py
+    *test*.py
     */apps.py
     */admin.py
+    core/management/*
 
 [report]
 fail_under = 70

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Hostel Occupancy Report{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h2>Hostel Occupancy Report (FR-12)</h2>
+  <p class="form-note">Real-time occupancy metrics matching active room and bed allocation records.</p>
+
+  <div class="filter-actions">
+    <a href="{% url 'hostel:occupancy_report_pdf' %}" class="btn">Export as PDF</a>
+    <a href="{% url 'hostel:room_list' %}" class="btn">View All Rooms</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-number">{{ report.total_blocks }}</div>
+      <div class="stat-label">Hostel Blocks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ report.total_rooms }}</div>
+      <div class="stat-label">Total Rooms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ report.total_beds }}</div>
+      <div class="stat-label">Total Beds</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ report.total_occupied }}</div>
+      <div class="stat-label">Occupied Beds</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ report.total_vacant }}</div>
+      <div class="stat-label">Vacant Beds</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ report.overall_rate }}%</div>
+      <div class="stat-label">Occupancy Rate</div>
+    </div>
+  </div>
+
+  <h3>Per-Block Breakdown</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hostel Block</th>
+          <th>Total Rooms</th>
+          <th>Total Beds</th>
+          <th>Occupied Beds</th>
+          <th>Vacant Beds</th>
+          <th>Occupancy Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in report.blocks %}
+          <tr>
+            <td><strong>Block {{ b.block }}</strong></td>
+            <td>{{ b.rooms }}</td>
+            <td>{{ b.beds }}</td>
+            <td><span class="badge badge-warning">{{ b.occupied }}</span></td>
+            <td><span class="badge badge-success">{{ b.vacant }}</span></td>
+            <td>{{ b.rate }}%</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">No hostel rooms or blocks found in database.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if report.blocks %}
+        <tfoot>
+          <tr>
+            <th>Summary Total</th>
+            <th>{{ report.total_rooms }}</th>
+            <th>{{ report.total_beds }}</th>
+            <th>{{ report.total_occupied }}</th>
+            <th>{{ report.total_vacant }}</th>
+            <th>{{ report.overall_rate }}%</th>
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</section>
+{% endblock %}

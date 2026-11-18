@@ -25,6 +25,8 @@ urlpatterns = [
     path('leaves/', include('leaves.urls')),
     path('visitors/', include('visitors.urls')),
     path('fees/', include('fees.urls')),
+    path('notices/', include('notices.urls')),
+    path('api/', include('api.urls')),
     path('', include('core.urls')),
     path('hostel/', include('hostel.urls')),
     path('health/', health_check, name='health_check'),

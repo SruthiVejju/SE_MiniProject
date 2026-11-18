@@ -11,7 +11,7 @@ from .models import UserProfile
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .permissions import get_profile
+from .permissions import get_profile, role_required
 
 from django.contrib.auth import authenticate, logout
 from django.utils import timezone
@@ -19,14 +19,32 @@ from .models import LoginAttempt
 from .login_forms import HMSLoginForm
 
 from django.contrib.auth import get_user_model
+from .audit import (
+    AUTH_LOGIN_SUCCESS, AUTH_LOGIN_FAILED, AUTH_LOGOUT,
+    log_audit_event, get_client_ip
+)
+from .models import AuditLog
+from django.db.models import Q
+from notices.models import Notice
 
 
 @login_required
 def home(request):
     profile = get_profile(request.user)
+    notices_qs = Notice.objects.select_related('posted_by').all()
+    if profile and profile.role == UserProfile.STUDENT:
+        student_block = (profile.block or '').strip()
+        notices_qs = notices_qs.filter(
+            Q(target_block='') |
+            Q(target_block__iexact='ALL') |
+            Q(target_block__iexact=student_block)
+        )
+    latest_notices = notices_qs[:5]
+
     return render(request, 'home.html', {
         'role': profile.role if profile else None,
         'notifications': request.user.notifications.all()[:20],
+        'latest_notices': latest_notices,
     })
 
 
@@ -79,6 +97,14 @@ def user_login(request):
                 remaining = attempt.locked_until - timezone.now()
                 minutes = max(1, int(remaining.total_seconds() // 60) + 1)
 
+                log_audit_event(
+                    AUTH_LOGIN_FAILED,
+                    actor=user,
+                    actor_username=username,
+                    request=request,
+                    details={'reason': 'Account locked', 'minutes_remaining': minutes}
+                )
+
                 messages.error(
                     request,
                     f'Account locked. Try again in approximately {minutes} minute(s).'
@@ -97,12 +123,27 @@ def user_login(request):
             attempt.reset()
 
             login(request, user)
+            log_audit_event(
+                AUTH_LOGIN_SUCCESS,
+                actor=user,
+                actor_username=user.username,
+                request=request,
+                details={'message': 'Login successful'}
+            )
             messages.success(request, 'Login successful!')
             return redirect('home')
 
         if user:
             attempt, _ = LoginAttempt.objects.get_or_create(user=user)
             attempt.record_failure()
+
+            log_audit_event(
+                AUTH_LOGIN_FAILED,
+                actor=user,
+                actor_username=username,
+                request=request,
+                details={'failed_attempts': attempt.failed_attempts, 'locked': attempt.is_locked()}
+            )
 
             if attempt.is_locked():
                 messages.error(
@@ -112,6 +153,13 @@ def user_login(request):
             else:
                 messages.error(request, 'Invalid username or password.')
         else:
+            log_audit_event(
+                AUTH_LOGIN_FAILED,
+                actor=None,
+                actor_username=username,
+                request=request,
+                details={'reason': 'User does not exist'}
+            )
             messages.error(request, 'Invalid username or password.')
 
     else:
@@ -122,11 +170,43 @@ def user_login(request):
 
 def user_logout(request):
     if request.method == 'POST':
+        if request.user.is_authenticated:
+            log_audit_event(
+                AUTH_LOGOUT,
+                actor=request.user,
+                actor_username=request.user.username,
+                request=request,
+                details={'message': 'User logged out'}
+            )
         logout(request)
         messages.success(request, 'You have been logged out.')
         return redirect('login')
 
     return redirect('home')
+
+
+@role_required(UserProfile.ADMIN)
+def audit_log_view(request):
+    """Admin view to inspect append-only audit logs (SEC-REQ-5)."""
+    action_filter = request.GET.get('action', '').strip()
+    username_filter = request.GET.get('username', '').strip()
+
+    logs = AuditLog.objects.all()
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    if username_filter:
+        logs = logs.filter(actor_username__icontains=username_filter)
+
+    distinct_actions = AuditLog.objects.values_list('action', flat=True).distinct().order_by('action')
+
+    return render(request, 'core/audit_logs.html', {
+        'logs': logs[:200],
+        'distinct_actions': distinct_actions,
+        'action_filter': action_filter,
+        'username_filter': username_filter,
+        'total_count': logs.count(),
+    })
+
 
 def health_check(request):
     try:

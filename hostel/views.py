@@ -1,5 +1,6 @@
 
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from core.models import UserProfile
@@ -7,6 +8,7 @@ from core.permissions import role_required
 
 from .forms import AllocationForm
 from .models import Allocation, Room
+from .reports import generate_occupancy_pdf, get_occupancy_data
 from .services import AllocationError, allocate_bed
 
 
@@ -40,7 +42,7 @@ def allocate_room(request):
             bed = form.cleaned_data["bed"]
 
             try:
-                allocation = allocate_bed(student, bed.pk)
+                allocation = allocate_bed(student, bed.pk, admin_user=request.user)
                 messages.success(
                     request,
                     f"Bed allocated successfully to {student.username}."
@@ -101,3 +103,21 @@ def student_dashboard(request):
             "outstanding_dues": outstanding_dues,
         }
     )
+
+
+@role_required(UserProfile.ADMIN)
+def occupancy_report(request, format=None):
+    """Generate hostel occupancy report with optional PDF export (FR-12)."""
+    data = get_occupancy_data()
+
+    if format == "pdf" or request.GET.get("format") == "pdf":
+        pdf_bytes = generate_occupancy_pdf(data)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        filename = f"hostel_occupancy_report_{data['generated_at']:%Y%m%d}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    return render(request, "hostel/occupancy_report.html", {
+        "report": data
+    })
+

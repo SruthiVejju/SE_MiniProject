@@ -22,4 +22,4 @@ jobs:
           coverage run manage.py test
           coverage report
       - name: Static security scan (fails on any high-severity finding)
-        run: bandit -r core leaves visitors fees config -x '*/tests.py,*/testutils.py' --severity-level high
+        run: bandit -r core leaves visitors fees hostel complaints notices api config -x '*/tests.py,*/testutils.py,*/test_*.py' --severity-level high
