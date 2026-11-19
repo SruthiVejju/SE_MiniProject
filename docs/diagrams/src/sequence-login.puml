@@ -1,31 +1,17 @@
 @startuml sequence-login
-actor Student
-participant "Web Client" as Web
-participant "API Gateway" as GW
-participant "Auth Service" as Auth
-database "Hostel DB" as DB
-
-Student -> Web : Enter roll number & password
-Web -> GW : POST /api/auth/login
-GW -> Auth : validateCredentials(rollNo, password)
-Auth -> DB : SELECT user WHERE rollNo = ?
-DB --> Auth : user record (hashed password)
-Auth -> Auth : verify(password, hash)
-
-alt credentials valid
-  Auth -> DB : reset failedAttempts, log success
-  Auth --> GW : JWT access token
-  GW --> Web : 200 OK { token }
-  Web --> Student : Redirect to Dashboard
-else invalid credentials
-  Auth -> DB : increment failedAttempts, log failure
-  alt failedAttempts >= 5
-    Auth -> DB : lock account (15 min)
-    Auth --> GW : 423 Locked
-  else
-    Auth --> GW : 401 Unauthorized
-  end
-  GW --> Web : error response
-  Web --> Student : Show error message
-end
+title Session login
+participant "User / browser" as P0
+participant "core.views.user_login" as P1
+participant "Django auth / session" as P2
+database "SQLite" as P3
+P0 -> P1 : POST /login/ (username, password)
+P1 -> P3 : Read known user and LoginAttempt
+P3 --> P1 : Account / lockout state
+P1 -> P2 : If unlocked: validate credentials
+P2 -> P3 : Read password hash; verify with configured hasher
+P1 -> P3 : Valid: reset attempts; audit success
+P1 -> P2 : Valid: login(request, user); create session
+P1 --> P0 : Valid: 302 redirect / + session cookie
+P1 -> P3 : Invalid: record failure; lock for 15 min at 5 attempts
+P1 --> P0 : Invalid / locked: render login form with errors
 @enduml

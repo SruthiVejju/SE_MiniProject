@@ -20,17 +20,17 @@ A web-based system to digitize hostel administration: student registration, room
 
 Rendered UML diagrams live in [`docs/diagrams/`](docs/diagrams/); their editable PlantUML sources are in [`docs/diagrams/src/`](docs/diagrams/src/).
 
-- Use Case Diagram — `use-case-diagram.png`
-- Component Diagram — `component-diagram.png`
-- Sequence Diagrams — `sequence-login.png`, `sequence-room-allocation.png`, `sequence-fee-payment.png`
+- Use Case Diagram â€” `use-case-diagram.png`
+- Component Diagram â€” `component-diagram.png`
+- Sequence Diagrams â€” `sequence-login.png`, `sequence-room-allocation.png`, `sequence-fee-payment.png`
 
-To regenerate diagrams after editing a `.puml` file:
+The four architecture/sequence PNGs and PlantUML sources can be regenerated from their shared definitions with:
 
 ```bash
-java -jar plantuml.jar -o .. docs/diagrams/src/*.puml
+python docs/diagrams/src/render_current_diagrams.py
 ```
 
-(requires Java and Graphviz's `dot` on `PATH`)
+This documentation-only renderer requires Pillow and uses Arial from Windows fonts. The unchanged use-case diagram retains its separate PlantUML source.
 
 ## Running the application
 
@@ -49,6 +49,13 @@ bandit -r core leaves visitors fees config -x '*/tests.py,*/testutils.py' --seve
 
 Cross-browser plan and results: [`docs/Cross_Browser_Test_Report.md`](docs/Cross_Browser_Test_Report.md).
 
-## Deviations from the submitted design
+## Final architecture and deviations
 
-The implementation uses Django (Python) monolith apps with server-rendered pages instead of the Node.js/Express services described in the Architecture document, and Django's session auth instead of JWT. Roles and hostel blocks are held in `core.UserProfile`.
+The implemented system is a Django modular monolith using server-rendered templates, SQLite and session authentication. The current [Architecture & Design Specification](docs/Architecture_Design.md) and [complete deviation record](docs/Design_Deviations.md) reconcile it with the original submitted design and identify remaining acceptance gaps.
+
+## Final test reports
+
+- [Unit Test Report](docs/Unit_Test_Report.md)
+- [System Validation Report](docs/System_Validation_Report.md)
+- [Code Coverage Report](docs/Code_Coverage_Report.md)
+- [Branch Coverage Report](docs/Branch_Coverage_Report.md)

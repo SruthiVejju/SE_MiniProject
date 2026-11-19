@@ -1,0 +1,12 @@
+test_100_percent_availability (test_availability.AvailabilityTests.test_100_percent_availability) ... ok
+test_downtime_reduces_availability (test_availability.AvailabilityTests.test_downtime_reduces_availability) ... ok
+test_duplicate_timestamps_do_not_count_as_uptime (test_availability.AvailabilityTests.test_duplicate_timestamps_do_not_count_as_uptime) ... ok
+test_incomplete_month_sample_does_not_claim_full_coverage (test_availability.AvailabilityTests.test_incomplete_month_sample_does_not_claim_full_coverage) ... ok
+test_insufficient_records (test_availability.AvailabilityTests.test_insufficient_records) ... ok
+test_long_monitoring_gap_is_not_counted (test_availability.AvailabilityTests.test_long_monitoring_gap_is_not_counted) ... ok
+test_planned_maintenance_is_excluded (test_availability.AvailabilityTests.test_planned_maintenance_is_excluded) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.003s
+
+OK
