@@ -59,3 +59,22 @@ The implemented system is a Django modular monolith using server-rendered templa
 - [System Validation Report](docs/System_Validation_Report.md)
 - [Code Coverage Report](docs/Code_Coverage_Report.md)
 - [Branch Coverage Report](docs/Branch_Coverage_Report.md)
+## Agile Project Management (Jira)
+
+- **Live Jira Scrum Board**: [Hostel Management System Board](https://achalasreenath948.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog)
+- **Total Story Points**: 99 SP across 3 Sprints and 8 Epics
+- **Methodology**: Scrum with 2-week timeboxed sprints and Fibonacci estimation
+
+### Team Workload Distribution
+
+| Team Member | Roll Number | GitHub Handle | Assigned Scope | Story Points |
+|---|---|---|---|---|
+| **Sruthi Vejju** | PES1UG24CS472 | `@SruthiVejju` | Registration, Login & Lockout, RBAC, Password Hashing, Performance & Availability | **25 SP** |
+| **Simran Joshi** | PES1UG24CS455 | `@joshi-simran` | Room Allocation, Dues View, Complaints System, Usability, 5k Scalability, HTTPS/TLS | **26 SP** |
+| **Shashank Vinayak** | PES1UG24CS435 | `@shashankv2303` | Leave/Outpass, Visitor Logs, Fee Payments, 70% Test Gate, Cross-Browser, Input Scan | **25 SP** |
+| **Shubashtiha Gowtham** | PES1UG24CS450 | `@shubashithagowtham-ship-it` | Notices Broadcast, Occupancy PDF Reports, Durability, Versioned REST API, Audit Log | **23 SP** |
+
+### Sprints Overview
+- **Sprint 1 (40 SP)**: Core Foundation, Basic Operations, Fee Payments, Security Baseline & 70% Coverage Gate
+- **Sprint 2 (39 SP)**: Complaints Management, Notices, Occupancy PDF Export, Durability, REST API & Audit Logging
+- **Sprint 3 (20 SP)**: Dashboard Load Testing (200 concurrent users), 99% Availability Monitoring & Usability Validation
