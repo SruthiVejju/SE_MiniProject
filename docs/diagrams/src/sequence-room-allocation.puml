@@ -1,27 +1,17 @@
 @startuml sequence-room-allocation
-actor Admin
-participant "Web Client" as Web
-participant "API Gateway" as GW
-participant "Student & Allocation Service" as StudentSvc
-database "Hostel DB" as DB
-participant "Notification Service" as Notif
-
-Admin -> Web : Select student & room/bed
-Web -> GW : POST /api/allocations
-GW -> StudentSvc : allocateRoom(studentId, roomId, bedId)
-StudentSvc -> DB : SELECT bed WHERE id = ? FOR UPDATE
-DB --> StudentSvc : bed status
-
-alt bed available
-  StudentSvc -> DB : UPDATE bed SET status='OCCUPIED', studentId=?
-  DB --> StudentSvc : success
-  StudentSvc -> Notif : notify(studentId, "Room Allocated")
-  StudentSvc --> GW : 201 Created { allocationId }
-  GW --> Web : success response
-  Web --> Admin : Show confirmation
-else bed already occupied
-  StudentSvc --> GW : 409 Conflict
-  GW --> Web : error response
-  Web --> Admin : Show "Bed unavailable" error
-end
+title Room allocation
+participant "Admin / browser" as P0
+participant "hostel.views / form" as P1
+participant "allocate_bed service" as P2
+database "SQLite" as P3
+P0 -> P1 : POST /hostel/allocate/
+P1 -> P1 : Enforce Admin role; validate form
+P1 -> P2 : allocate_bed(student, bed_id, admin_user)
+P2 -> P3 : Atomic: read bed / active allocations
+P3 --> P2 : Current availability
+P2 -> P3 : Available: create allocation; mark occupied; audit
+P2 --> P1 : Success: allocation returned after transaction
+P1 --> P0 : 302 allocation confirmation redirect
+P2 --> P1 : Occupied / conflict / DB busy: AllocationError
+P1 --> P0 : Error: render form with validation message
 @enduml

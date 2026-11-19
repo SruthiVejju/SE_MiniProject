@@ -1,171 +1,122 @@
 # Software Architecture & Design Specification
 
-
----
+Version: 2.0 | As implemented: 19 November 2026
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-
-This document describes the software architecture and detailed design of the Hostel Management System (HMS), translating the requirements in the [Software Requirements Specification](SRS.md) into a concrete component structure, technology choices, and interaction designs.
+This IEEE 1016-oriented description records the implemented Hostel Management System (HMS). It replaces the original React/Express service design with the actual Django architecture. Requirements identifiers retain their meaning from [SRS](SRS.md); a mapping is not a claim that every acceptance criterion has passed.
 
 ### 1.2 Scope
-
-Covers the system's architectural style, component decomposition, security architecture, API design, sequence-level behavior for key use cases, and error-handling strategy. It does not cover low-level class implementation, which is left to the implementation phase.
+Covers components, interactions, persistence, security, interfaces, error handling, deployment and requirement traceability. [Design Deviations](Design_Deviations.md) records differences from the submitted baseline, their consequences and unresolved acceptance gaps. No application behaviour is changed by this documentation revision.
 
 ### 1.3 References
-
-- [SRS.md](SRS.md) — Software Requirements Specification, v1.0.
-- [Test_Plan.md](Test_Plan.md) — Test Plan, v1.0.
-- IEEE Std 1016-2009.
-
-### 1.4 Overview
-
-Section 2 gives a system overview. Section 3 presents the architecture (pattern, component diagram, security architecture, traceability). Section 4 presents the detailed design (sequence diagrams, API design, data design, error handling).
-
----
+- IEEE Std 1016-2009, Software Design Descriptions.
+- [Original SRS](SRS.md), [Test Plan](Test_Plan.md), [REST API catalogue](REST_API.md).
+- Implementation: `config/`, `core/`, `hostel/`, `fees/`, `complaints/`, `leaves/`, `visitors/`, `notices/`, `api/`.
 
 ## 2. System Overview
-
-HMS is a three-tier web application: a browser-based **Web Client**, a set of **REST API services** implementing business logic, and a **relational database** for persistence, with a single external integration to a third-party **Payment Gateway** for online fee payments.
-
----
+HMS is one Django application with server-rendered HTML and supplementary versioned JSON endpoints. Four roles (Student, Warden, Admin and Security Guard) share Django authentication; `core.UserProfile` stores role and block. Browser forms call Django views directly. JSON endpoints run in the same process and share the same ORM/database. There is no React SPA, independently deployed domain service, API gateway, JWT issuer, WebSocket server or external payment processor.
 
 ## 3. Architectural Design
 
-### 3.1 Architecture Pattern
-
-HMS follows a **layered (n-tier) client–server architecture** combined with a **service-oriented decomposition** within the application layer:
-
-1. **Presentation Layer** — Web Client (single-page application).
-2. **Application Layer** — an API Gateway fronting independently-deployable domain services (Auth, Student & Allocation, Fee, Complaint, Leave/Outpass, Visitor & Notice, Notification).
-3. **Data Layer** — a relational database plus an append-only audit log store.
-
-This pattern was chosen over a monolithic MVC design because it (a) cleanly maps each service to a bounded set of FRs from the SRS, simplifying traceability and independent testing, and (b) isolates the security-sensitive Auth and Fee services so that access-control and audit-logging concerns (SEC-REQ-1 through SEC-REQ-5) are centralized rather than duplicated.
+### 3.1 Pattern and Rationale
+A modular monolith follows Django's model-template-view pattern. Templates and CSS form the presentation layer; URL routing, middleware, forms, views and selected service functions implement application behaviour; the ORM persists models to SQLite. Domain apps separate responsibilities without network or database ownership boundaries. This reduces setup and deployment complexity for a local academic demonstration, but does not demonstrate independent service scaling or production readiness.
 
 ### 3.2 Component Diagram
+![Implemented component diagram](diagrams/component-diagram.png)
 
-![Component Diagram](diagrams/component-diagram.png)
+Editable UML: [component-diagram.puml](diagrams/src/component-diagram.puml).
 
-*Source: `diagrams/src/component-diagram.puml`*
+### 3.3 Components and Requirement Traceability
+| Component | Implemented responsibility | Requirements supported |
+|---|---|---|
+| Templates / static CSS | Server-rendered forms, navigation, dashboards, receipts | FR-1..12, NFR-3, NFR-6 |
+| core | Registration, login/lockout, sessions, role/block profiles, notifications, audit events and health check | FR-1, FR-2, FR-8; SEC-REQ-1,2,5 |
+| hostel | Room/bed inventory, transactional allocation, student dashboard and occupancy PDF | FR-3, FR-4, FR-12; NFR-1,4 |
+| fees | Fee accounts, manual cash/online-reference recording, receipts | FR-4, FR-10; SEC-REQ-5 |
+| complaints | Complaint forms, student submission, warden management | FR-5, FR-6; NFR-3,7 |
+| leaves | Submission, block routing, warden decisions, persisted notifications | FR-7, FR-8; NFR-7 |
+| visitors | Security-guard entry/exit recording | FR-9 |
+| notices | General/block notices and notifications | FR-11 |
+| api/v1 and api/v2 | Session-authenticated JSON resources; versioned collection schemas | NFR-8; portions of FR-4,5,11,12 |
+| Django ORM / SQLite | Shared relational persistence, transactions, model constraints | NFR-7; domain record persistence |
+| Tests / monitoring scripts | Automated verification and availability measurement utilities | NFR-2,5; security verification |
 
-### 3.3 Component Descriptions
+Support here means responsibility, not full compliance. See the deviation record and System Validation Report for limitations.
 
-| Component | Responsibility |
+### 3.4 Security Architecture
+- Django session authentication uses a server-side session and browser cookie. Login uses username/password; five failed attempts for a known account trigger a 15-minute lockout through `LoginAttempt`.
+- Password storage uses Django's default PBKDF2 hasher because no custom `PASSWORD_HASHERS` is configured. This differs from the SRS bcrypt requirement.
+- Role decorators and view-level checks enforce authorization. Block scoping is applied to warden workflows and student notice audiences.
+- ORM queries, form validation, template escaping and security headers provide input/output protections. JSON complaint validation currently differs from the HTML form. Some JSON write views use `csrf_exempt`; this is a limitation with session authentication, not an assertion of complete CSRF protection.
+- Audit records share SQLite with application data. Existing model-instance changes/deletes and admin editing are blocked; this is application-level protection, not database-enforced immutable storage. Direct SQL or bulk ORM operations are outside that guarantee.
+- With `DEBUG=False`, Django redirects HTTP to HTTPS and enables secure cookies/HSTS. TLS certificates and protocol negotiation require an external HTTPS server. Development defaults use HTTP. The configured secret key is static; deployment hardening is outside this documentation change.
+
+### 3.5 Deployment View
+| Layer | Current implementation |
 |---|---|
-| Web Client | Renders role-specific UI (Student/Warden/Admin/Security); performs client-side validation; calls the API Gateway over HTTPS. |
-| API Gateway | Single entry point; terminates TLS, routes requests to domain services, enforces coarse-grained rate limiting. |
-| Auth Service | Registration, login, password hashing/verification, account lockout, JWT issuance, RBAC role assignment. |
-| Student & Allocation Service | Student profile management, room/bed allocation and lookup. |
-| Fee Service | Fee-due tracking, payment recording (cash/online), receipt generation, Payment Gateway integration. |
-| Complaint Service | Complaint submission, status transitions, warden remarks. |
-| Leave/Outpass Service | Leave/outpass request submission and warden approval/rejection workflow. |
-| Visitor & Notice Service | Visitor entry/exit logging; notice/announcement posting and retrieval. |
-| Notification Service | Delivers in-app notifications (e.g., leave decisions) to the Web Client. |
-| Hostel DB | Authoritative relational store for all domain entities. |
-| Audit Log Store | Append-only store for authentication events and administrative actions (SEC-REQ-5). |
-
-### 3.4 Traceability to Requirements
-
-| Component | Traces to Requirement(s) |
-|---|---|
-| Auth Service | FR-1, FR-2, SEC-REQ-1, SEC-REQ-2, SEC-REQ-5 |
-| Student & Allocation Service | FR-3, FR-4, NFR-4 |
-| Fee Service | FR-4, FR-10, SEC-REQ-5 |
-| Complaint Service | FR-5, FR-6 |
-| Leave/Outpass Service | FR-7, FR-8, NFR-7 |
-| Visitor & Notice Service | FR-9, FR-11, FR-12 |
-| Notification Service | FR-8 |
-| API Gateway | SEC-REQ-3, SEC-REQ-4, NFR-8 |
-| Hostel DB / Audit Log Store | NFR-7, SEC-REQ-5 |
-
-### 3.5 Security Architecture
-
-- **Perimeter:** all external traffic terminates TLS at the API Gateway (SEC-REQ-3); plaintext HTTP is rejected.
-- **Authentication:** the Auth Service issues short-lived JWT access tokens after verifying bcrypt-hashed credentials (SEC-REQ-1); 5 consecutive failed attempts trigger a 15-minute account lockout (FR-2).
-- **Authorization:** every downstream service enforces RBAC by validating the caller's role claim from the JWT before executing a request (SEC-REQ-2) — e.g., the Fee Service rejects a Student request for another student's ledger.
-- **Input validation:** the API Gateway and each domain service validate and sanitize all inbound payloads against a schema to mitigate SQL Injection and XSS (SEC-REQ-4).
-- **Auditing:** the Auth Service and Fee Service emit events to the append-only Audit Log Store for every authentication attempt and administrative fee/allocation change (SEC-REQ-5).
-- **Defense in depth:** the database layer uses parameterized queries exclusively (no dynamic SQL string concatenation), and the API Gateway applies per-IP rate limiting on `/api/auth/login` to blunt brute-force attempts (supports SEC-OBJ-3).
-
-### 3.6 Deployment View / Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Web Client | React SPA (responsive, targets latest two versions of Chrome/Firefox/Edge — NFR-6) |
-| API Services | Node.js (Express) REST services, containerized, behind the API Gateway |
-| Database | PostgreSQL |
-| Transport | HTTPS/TLS 1.2+ |
-| Payment Integration | Third-party Payment Gateway REST API (sandbox for testing) |
-
----
+| Browser | HTML templates, plain CSS; no SPA build step |
+| Runtime | Python and Django (dependency range in requirements.txt) |
+| Application | One Django project; WSGI and ASGI entry points |
+| Database | Local SQLite `db.sqlite3` |
+| Static assets | `static/css/hms.css` and template assets |
+| Development server | `python manage.py runserver` |
+| Production transport | External TLS termination required; not provisioned by the repository |
+| Integration | No external payment gateway integration |
 
 ## 4. Detailed Design
 
 ### 4.1 Sequence Diagrams
+These diagrams depict the HTML workflows actually implemented, rather than the original proposed JSON/JWT flows.
 
-#### 4.1.1 Login / Authentication (traces FR-2, SEC-REQ-1, SEC-REQ-5)
+#### 4.1.1 Login (FR-2)
+![Login sequence](diagrams/sequence-login.png)
+[Editable UML](diagrams/src/sequence-login.puml)
 
-![Sequence: Login](diagrams/sequence-login.png)
+#### 4.1.2 Room allocation (FR-3)
+![Allocation sequence](diagrams/sequence-room-allocation.png)
+[Editable UML](diagrams/src/sequence-room-allocation.puml)
 
-*Source: `diagrams/src/sequence-login.puml`*
+#### 4.1.3 Payment recording (FR-10)
+![Payment sequence](diagrams/sequence-fee-payment.png)
+[Editable UML](diagrams/src/sequence-fee-payment.puml)
 
-#### 4.1.2 Room Allocation (traces FR-3)
+### 4.2 Interfaces
+HTML pages use Django form POSTs, rendered errors and redirects. Representative routes:
 
-![Sequence: Room Allocation](diagrams/sequence-room-allocation.png)
+| Route | Behaviour |
+|---|---|
+| `/register/`, `/login/`, `/logout/` | Registration, session login and POST logout |
+| `/hostel/allocate/`, `/hostel/my-room/` | Admin allocation; student's own allocation/dues |
+| `/fees/payments/new/`, `/fees/receipts/{id}/` | Admin records payment and views receipt |
+| `/complaints/new/`, `/complaints/`, `/complaints/{id}/update/` | Submit, list and warden update |
+| `/leaves/new/`, `/leaves/pending/`, `/leaves/{id}/decide/` | Request and decision workflow |
+| `/visitors/entry/`, `/visitors/{id}/exit/` | Guard entry/exit |
+| `/hostel/reports/occupancy/`, `/hostel/reports/occupancy/pdf/` | Admin report and export |
+| `/notifications/read/`, `/audit/`, `/health/` | Notification read state, admin audit view, database health |
 
-*Source: `diagrams/src/sequence-room-allocation.puml`*
+The JSON API uses existing authenticated Django sessions, not bearer tokens:
 
-#### 4.1.3 Fee Payment (traces FR-10)
+| Version | Routes and methods |
+|---|---|
+| v1 | GET root, health, rooms, notice detail, occupancy report, leaves and fee dues; GET/POST notices and complaints |
+| v2 | GET root, rooms, notices and occupancy report |
 
-![Sequence: Fee Payment](diagrams/sequence-fee-payment.png)
+See [REST_API.md](REST_API.md) for full paths. v1 collections use flat schemas; v2 adds metadata envelopes. Occupancy can return PDF. API authentication failures return JSON 401; role denials use 403. Registration, login, allocation, visitor logging, fee recording, complaint status updates and leave decisions are HTML workflows, not the original proposed REST endpoints. `leaves_api` implements GET only despite a stale POST description in its docstring.
 
-*Source: `diagrams/src/sequence-fee-payment.puml`*
+### 4.3 Data Design
+Django's built-in User and session tables coexist with UserProfile, LoginAttempt, Notification, AuditLog, Room, Bed, Allocation, FeeAccount, FeePayment, Complaint, LeaveRequest, VisitorLog and Notice. Hostel blocks are string attributes rather than a separate HostelBlock entity. All apps share database tables through ORM relationships. See model and migration files for authoritative fields and constraints.
 
-### 4.2 API Design
+### 4.4 Transactions and Errors
+- Form validation errors render the form; successful browser operations commonly redirect. These flows do not promise the original REST 201/409/423 response contract.
+- Allocation uses `transaction.atomic()`, availability checks, constraints and `select_for_update()`. SQLite does not implement row-level SELECT FOR UPDATE locks; the code translates integrity/database-busy errors into allocation errors. Production concurrent allocation safety is not established by sequential tests.
+- Fee recording validates positive amount, outstanding dues and a reference for ONLINE. It updates payment, receipt, account and audit records transactionally. There is no gateway request, payment confirmation or external-decline status.
+- Complaint/leave writes are persisted through transactional paths before successful responses. Existing durability tests tear down database connections; they do not kill and restart an operating-system process.
+- API helpers return JSON errors; HTML access controls use redirects/403 responses. There is no custom global correlation-ID error middleware.
 
-All endpoints are served under `/api`, accept and return JSON, and require a valid `Authorization: Bearer <JWT>` header unless noted.
+### 4.5 Notification and Audit Behaviour
+Notifications are database rows displayed on the home page when loaded; users can mark them read. There is no push/WebSocket delivery guarantee to an already-open page. Audit retention metadata is set to at least 365 days; database-level retention enforcement and long-term operational storage have not been demonstrated.
 
-| Method | Endpoint | Description | Auth | Traces To |
-|---|---|---|---|---|
-| POST | `/api/auth/register` | Register a new student account | Public | FR-1 |
-| POST | `/api/auth/login` | Authenticate and obtain a JWT | Public | FR-2 |
-| GET | `/api/students/{id}/allocation` | View a student's room/bed allocation and dues | Student (self), Admin | FR-4 |
-| POST | `/api/allocations` | Allocate a room/bed to a student | Admin | FR-3 |
-| POST | `/api/complaints` | Submit a maintenance complaint | Student | FR-5 |
-| PATCH | `/api/complaints/{id}` | Update complaint status/remark | Warden | FR-6 |
-| POST | `/api/leaves` | Submit a leave/outpass request | Student | FR-7 |
-| PATCH | `/api/leaves/{id}` | Approve/reject a leave request | Warden | FR-8 |
-| POST | `/api/visitors` | Log visitor entry | Security | FR-9 |
-| PATCH | `/api/visitors/{id}/exit` | Log visitor exit | Security | FR-9 |
-| POST | `/api/fees/payments` | Record a fee payment | Admin | FR-10 |
-| POST | `/api/notices` | Post a notice/announcement | Admin | FR-11 |
-| GET | `/api/reports/occupancy` | Generate occupancy report (PDF) | Admin | FR-12 |
-
-Each endpoint returns standard HTTP status codes: `200`/`201` on success, `400` on validation failure, `401` on missing/invalid auth, `403` on RBAC denial, `404` on missing resource, `409` on state conflict (e.g., bed already occupied), `423` on account lockout, `429` on rate-limit rejection, `500` on unexpected server error.
-
-### 4.3 Data Design (Overview)
-
-Core entities: `User` (Student/Warden/Admin/Security, with hashed credentials and role), `HostelBlock`, `Room`, `Bed` (status: VACANT/OCCUPIED), `Allocation`, `FeeLedger`, `Payment`, `Complaint`, `LeaveRequest`, `VisitorLog`, `Notice`, `AuditLogEntry`. Foreign keys enforce that a `Bed` can have at most one active `Allocation`, and a `FeeLedger` belongs to exactly one `User`.
-
-### 4.4 Error Handling
-
-- **Validation errors** (malformed/missing fields) are caught at the API Gateway and domain-service boundary and returned as `400` with a machine-readable error code and human-readable message; no partial writes occur.
-- **Concurrency conflicts** (e.g., two admins allocating the same bed) are handled with a row-level lock (`SELECT ... FOR UPDATE`) in the Student & Allocation Service; the loser of the race receives `409 Conflict` rather than silently overwriting state (see Section 4.1.2).
-- **External-dependency failures** (Payment Gateway timeout/decline) are caught in the Fee Service, mapped to `402 Payment Required`, and never leave the fee ledger in a partially-updated state — the database write only occurs after a confirmed successful transaction (see Section 4.1.3).
-- **Authentication/authorization errors** return `401`/`403` without leaking whether a given username exists (to avoid user enumeration).
-- **Unhandled exceptions** are caught by a global error-handling middleware in each service, logged with a correlation ID, and returned to the client as a generic `500` response that does not expose stack traces or internal implementation details.
-- **Persistence-before-acknowledgment**: to satisfy NFR-7, each service commits a submission to the database (and receives a durable write confirmation) before returning a success response to the client.
-
-### 4.5 Design Constraints
-
-- All inter-service and client-service calls occur over HTTPS; no service accepts plaintext HTTP (SEC-REQ-3).
-- No domain service accesses another service's database tables directly — all cross-service data access goes through the owning service's API, preserving the traceability and RBAC boundaries defined in Section 3.4 and 3.5.
-
----
-
-## 5. Appendices
-
-### Appendix A — Diagram Source Files
-
-All PlantUML source files used to generate the diagrams in this document are located under `docs/diagrams/src/`. Rendered PNGs are under `docs/diagrams/`.
+## 5. Verification and Evolution
+[Unit Test Report](Unit_Test_Report.md), [System Validation Report](System_Validation_Report.md), [Code Coverage Report](Code_Coverage_Report.md), and [Branch Coverage Report](Branch_Coverage_Report.md) record the measured snapshot. Untested targets remain explicitly pending. [Design Deviations](Design_Deviations.md) is the implementation-to-baseline reconciliation; the original SRS and Test Plan remain unchanged for historical traceability.

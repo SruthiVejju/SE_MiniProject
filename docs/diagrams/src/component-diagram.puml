@@ -1,51 +1,21 @@
 @startuml component-diagram
+title Implemented Django modular monolith
 skinparam componentStyle rectangle
-
-actor "Student / Warden / Admin / Security" as User
-
-package "Presentation Layer" {
-  [Web Client (React SPA)] as Web
+[Browser: HTML templates / CSS] as Browser
+package "Single Django application" {
+ [Routing + middleware\nSessions / RBAC / security headers] as Routing
+ [core / hostel / fees] as Domains1
+ [complaints / leaves / visitors / notices] as Domains2
+ [api/v1 + api/v2 JSON views] as API
+ [Django ORM + shared models] as ORM
 }
-
-package "Application Layer (REST API)" {
-  [API Gateway] as GW
-  [Auth Service] as Auth
-  [Student & Allocation Service] as StudentSvc
-  [Fee Service] as FeeSvc
-  [Complaint Service] as ComplaintSvc
-  [Leave / Outpass Service] as LeaveSvc
-  [Visitor & Notice Service] as VisitorSvc
-  [Notification Service] as Notif
-}
-
-package "Data Layer" {
-  database "Hostel DB\n(PostgreSQL)" as DB
-  [Audit Log Store] as AuditLog
-}
-
-cloud "Payment Gateway\n(3rd Party)" as Pay
-
-User --> Web
-Web --> GW : HTTPS / JSON
-
-GW --> Auth
-GW --> StudentSvc
-GW --> FeeSvc
-GW --> ComplaintSvc
-GW --> LeaveSvc
-GW --> VisitorSvc
-
-Auth --> DB
-StudentSvc --> DB
-FeeSvc --> DB
-FeeSvc --> Pay
-ComplaintSvc --> DB
-LeaveSvc --> DB
-VisitorSvc --> DB
-
-Auth --> AuditLog
-FeeSvc --> AuditLog
-ComplaintSvc --> Notif
-LeaveSvc --> Notif
-Notif --> Web : Push / WebSocket
+database "SQLite: domain records, sessions, notifications, audit" as DB
+Browser --> Routing : HTTP local / HTTPS deployment
+Routing --> Domains1
+Routing --> Domains2
+Routing --> API
+Domains1 --> ORM
+Domains2 --> ORM
+API --> ORM
+ORM --> DB
 @enduml
